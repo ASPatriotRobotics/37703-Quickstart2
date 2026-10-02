@@ -73,8 +73,8 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
      * in the launch() function to only run the windmill servo when the motor is spinning fast
      * enough to make a successful throw.
      */
-    public final int LAUNCHER_TARGET_VELOCITY = 6000; //2678 RPM
-    public final int LAUNCHER_MIN_VELOCITY = 4000; //2571 RPM
+    public final int LAUNCHER_TARGET_VELOCITY = 5000; //2678 RPM
+    public final int LAUNCHER_MIN_VELOCITY = 2450; //2571 RPM
 
 
     /*
@@ -158,7 +158,7 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
          * servos work to pull elements into the intake.
          */
         rightIntakeServo.setDirection(DcMotorSimple.Direction.REVERSE);
-        //windmillServo.setDirection(DcMotorSimple.Direction.REVERSE);
+        windmillServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
         /*
          * Tell the driver that initialization is complete.
@@ -228,6 +228,7 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
         /*
          * Show motor powers on the Driver Station via telemetry.
          */
+        telemetry.addData("launcher rpm", launcher.getVelocity());
         telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftFrontPower, rightFrontPower);
         telemetry.addData("Triggers", "left (%.2f, right (%.2f)",gamepad1.left_trigger, gamepad1.right_trigger);
     }
@@ -288,7 +289,7 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
          * inside the hopper.
          */
         if (gamepad1.right_bumper && launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
-            windmillServo.setPower(1);
+            windmillServo.setPower(-1);
             intakePower = 0.5;
         } else {
             windmillServo.setPower(0);
