@@ -274,7 +274,7 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
          * holding down the right gamepad. If they are, then we want to start spinning up the launcher.
          * Otherwise, we start spinning the launcher down.
          */
-        if (gamepad2.right_bumper) {
+        if (gamepad1.right_bumper) {
             launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
         } else {
             launcher.setVelocity(0);
@@ -287,7 +287,7 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
          * add some power to the intake power. This can sometimes help dislodge stuck elements from
          * inside the hopper.
          */
-        if (gamepad2.right_bumper && launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
+        if (gamepad1.right_bumper && launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
             windmillServo.setPower(-1);
             intakePower += 0.5;
         } else {
