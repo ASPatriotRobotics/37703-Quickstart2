@@ -74,7 +74,7 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
      * enough to make a successful throw.
      */
     public final int LAUNCHER_TARGET_VELOCITY = 500; //2678 RPM
-    public final int LAUNCHER_MIN_VELOCITY = 490; //2571 RPM
+    public final int LAUNCHER_MIN_VELOCITY = 470; //2571 RPM
 
 
     /*
