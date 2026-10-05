@@ -73,8 +73,8 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
      * in the launch() function to only run the windmill servo when the motor is spinning fast
      * enough to make a successful throw.
      */
-    public final int LAUNCHER_TARGET_VELOCITY = 400; //2678 RPM
-    public final int LAUNCHER_MIN_VELOCITY = 350 ; //2571 RPM
+    public final int LAUNCHER_TARGET_VELOCITY = 1475; //2678 RPM
+    public final int LAUNCHER_MIN_VELOCITY = 1440; //2571 RPM
 
 
     /*
@@ -158,7 +158,7 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
          * servos work to pull elements into the intake.
          */
         rightIntakeServo.setDirection(DcMotorSimple.Direction.REVERSE);
-        windmillServo.setDirection(DcMotorSimple.Direction.REVERSE);
+        windmillServo.setDirection(DcMotorSimple.Direction.FORWARD);
 
         /*
          * Tell the driver that initialization is complete.
