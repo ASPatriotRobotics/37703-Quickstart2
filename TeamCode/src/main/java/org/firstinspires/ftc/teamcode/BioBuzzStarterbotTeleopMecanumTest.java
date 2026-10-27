@@ -230,9 +230,26 @@ public class BioBuzzStarterbotTeleopMecanumTest extends OpMode {
         /*
          * Show motor powers on the Driver Station via telemetry.
          */
-        telemetry.addData("launcher rpm", launcher.getVelocity());
+//        telemetry.addData("launcher rpm", launcher.getVelocity());
         telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftFrontPower, rightFrontPower);
         telemetry.addData("Triggers", "left (%.2f, right (%.2f)",gamepad1.left_trigger, gamepad1.right_trigger);
+
+
+        double ticksPerSecond = launcher.getVelocity();
+
+        double ticksPerFlywheelRevolution = 28.0;
+// Replace with the verified encoder and gearing conversion.
+
+        double actualRPM =
+                ticksPerSecond * 60.0 / ticksPerFlywheelRevolution;
+
+        telemetry.addData("Launcher ticks/sec", ticksPerSecond);
+        telemetry.addData("Flywheel RPM", actualRPM);
+        telemetry.addData("Target ticks/sec", LAUNCHER_TARGET_VELOCITY);
+        telemetry.addData("Feeder command",
+                gamepad1.left_bumper ? "Requested" : "Off");
+        telemetry.addData("Feeder Ready",ticksPerSecond>= LAUNCHER_MIN_VELOCITY);
+        telemetry.update();
     }
 
     /*
@@ -269,32 +286,50 @@ public class BioBuzzStarterbotTeleopMecanumTest extends OpMode {
     }
 
     void launch() {
-        /*
-         * Calling gamepad1.right_bumper returns a boolean which will be true if the bumper is
-         * held down, and false if it is not. Notably, this will continue to be true for every
-         * cycle of our code that the driver holds down that bumper.
-         * The first step of our launch() function is checking to see if the user is currently
-         * holding down the right gamepad. If they are, then we want to start spinning up the launcher.
-         * Otherwise, we start spinning the launcher down.
-         */
-        if (gamepad1.right_bumper) {
-            launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-        } else {
-            launcher.setVelocity(0);
-        }
+//        /*
+//         * Calling gamepad1.right_bumper returns a boolean which will be true if the bumper is
+//         * held down, and false if it is not. Notably, this will continue to be true for every
+//         * cycle of our code that the driver holds down that bumper.
+//         * The first step of our launch() function is checking to see if the user is currently
+//         * holding down the right gamepad. If they are, then we want to start spinning up the launcher.
+//         * Otherwise, we start spinning the launcher down.
+//         */
+//        if (gamepad1.right_bumper) {
+//            launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
+//        } else {
+//            launcher.setVelocity(0);
+//        }
+//
+//        /*
+//         * Here we ask if the driver is currently pressing the right bumper, AND the launcher is
+//         * spinning fast enough to make a successful shot. If it is, then we will turn on the
+//         * windmill servo to start feeding the elements into the launcher motor. We also
+//         * add some power to the intake power. This can sometimes help dislodge stuck elements from
+//         * inside the hopper.
+//         */
+//        if (gamepad1.left_bumper && launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
+//            windmillServo.setPower(-1);
+//            intakePower = 0.5;
+//        } else {
+//            windmillServo.setPower(0);
+//        }
 
-        /*
-         * Here we ask if the driver is currently pressing the right bumper, AND the launcher is
-         * spinning fast enough to make a successful shot. If it is, then we will turn on the
-         * windmill servo to start feeding the elements into the launcher motor. We also
-         * add some power to the intake power. This can sometimes help dislodge stuck elements from
-         * inside the hopper.
-         */
-        if (gamepad1.left_bumper && launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
-            windmillServo.setPower(-1);
-            intakePower = 0.5;
-        } else {
-            windmillServo.setPower(0);
-        }
+        boolean flywheelRequested = gamepad1.right_bumper;
+        boolean feedRequested = gamepad1.left_bumper;
+
+        launcher.setVelocity(
+                flywheelRequested ? LAUNCHER_TARGET_VELOCITY * 28.0 / 60.0 : 0
+        );
+
+        double actualVelocity = launcher.getVelocity();
+
+        boolean ready = flywheelRequested
+                && actualVelocity >= LAUNCHER_MIN_VELOCITY;
+
+        windmillServo.setPower(
+                feedRequested && ready ? -0.5 : 0
+        );
+
+        // Do not automatically override intakePower here.
     }
 }
