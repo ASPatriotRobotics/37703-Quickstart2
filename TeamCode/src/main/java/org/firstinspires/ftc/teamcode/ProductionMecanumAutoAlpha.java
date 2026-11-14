@@ -17,8 +17,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 @Autonomous(name = "Production Mecanum Auto Alpha", group = "Competition")
 public class ProductionMecanumAutoAlpha extends LinearOpMode {
 
-    public final int LAUNCHER_TARGET_VELOCITY = 1440; //2678 RPM
-    public final int LAUNCHER_MIN_VELOCITY = 1400; //2571 RPM
+    public final int LAUNCHER_TARGET_VELOCITY = 1140; //2678 RPM
+    public final int LAUNCHER_MIN_VELOCITY = 1070; //2571 RPM
 
     double intakePower = 0.5;
 
@@ -78,11 +78,11 @@ public class ProductionMecanumAutoAlpha extends LinearOpMode {
         if (opModeIsActive()) {
             if (!isParkOnly) {
                 // STEP 1: Drive to Score Location (e.g., forward 32 inches)
-                drive.driveStraight(40.0, 0.0, 0.7, 3.0);
+                drive.driveStraight(44.0, 0.0, 0.7, 3.0);
 
                 // STEP 2: Turn to face the scoring element (e.g., turn 90 degrees left)
                 drive.turnToHeading(-90.0, 0.5, 2.0);
-
+                drive.driveStraight(4.0, -90, 0.5, 1.0);
                 // STEP 3: Actuate mechanisms to score with Live Telemetry Tracking
                 launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
 
@@ -122,17 +122,17 @@ public class ProductionMecanumAutoAlpha extends LinearOpMode {
                 intake.setPower(0);
 
                 // STEP 4: Back away from the score position cleanly holding the 90-degree angle
-                drive.driveStraight(-96.0, -90.0, 0.5, 6.0);
+                drive.driveStraight(-100.0, -93.0, 0.7, 7.0);
 
                 // STEP 5: Turn toward the human player wall or park zone (e.g., face -90 degrees)
                 // drive.turnToHeading(0.0, 0.6, 2.5);
 
                 // STEP 6: Strafe safely into the designated parking zone holding 90.0
-                drive.strafe(32.0, 180.0, 0.6, 3.0);
+                drive.strafe(32.0, -90.0, 0.6, 3.0);
             } else {
                 drive.driveStraight(3.0, 0.0, 0.5, 2.0);
                 drive.turnToHeading(-90.0, 0.5, 2.0);
-                drive.driveStraight(3.0, -90.0, 0.6, 2.0);
+                drive.driveStraight(5.0, -90.0, 0.6, 2.0);
             }
         }
     }
