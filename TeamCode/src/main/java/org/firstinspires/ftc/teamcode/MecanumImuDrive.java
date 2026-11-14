@@ -66,7 +66,7 @@ public class MecanumImuDrive {
         frontLeft = hardwareMap.get(DcMotorEx.class, "left_front_drive");
         frontRight = hardwareMap.get(DcMotorEx.class, "right_front_drive");
         backLeft = hardwareMap.get(DcMotorEx.class, "left_back_drive");
-        backRight = hardwareMap.get(DcMotorEx.class, "right_back-drive");
+        backRight = hardwareMap.get(DcMotorEx.class, "right_back_drive");
 
         // Standard Mecanum reversal (Left side reversed)
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
