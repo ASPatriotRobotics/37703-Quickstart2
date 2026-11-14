@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -9,18 +11,22 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @Autonomous(name = "Production Mecanum Auto Alpha", group = "Competition")
 public class ProductionMecanumAutoAlpha extends LinearOpMode {
 
-
     public final int LAUNCHER_TARGET_VELOCITY = 1440; //2678 RPM
     public final int LAUNCHER_MIN_VELOCITY = 1400; //2571 RPM
 
-    double intakePower=0.5;
+    double intakePower = 0.5;
 
     @Override
     public void runOpMode() {
+        // Merge Driver Station telemetry with FTC Dashboard graphing output
+        Telemetry customTelemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
+
         // Initialize drivetrain controller with tuned constants
         MecanumImuDrive drive = new MecanumImuDrive(this, hardwareMap);
 
@@ -49,9 +55,8 @@ public class ProductionMecanumAutoAlpha extends LinearOpMode {
         rightIntakeServo.setDirection(DcMotorSimple.Direction.REVERSE);
         windmillServo.setDirection(DcMotorSimple.Direction.FORWARD);
 
-
-        telemetry.addLine("Robot Calibrated & Ready.");
-        telemetry.update();
+        customTelemetry.addLine("Robot Calibrated & Ready.");
+        customTelemetry.update();
 
         boolean isRedAlliance = true;
         boolean isParkOnly = false;
@@ -61,9 +66,9 @@ public class ProductionMecanumAutoAlpha extends LinearOpMode {
             if (gamepad1.b) isRedAlliance = true;  // Red
             if (gamepad1.a) isParkOnly = !isParkOnly;
 
-            telemetry.addData("Alliance", isRedAlliance ? "RED" : "BLUE");
-            telemetry.addData("Strategy", isParkOnly ? "PARK ONLY" : "SCORE + PARK");
-            telemetry.update();
+            customTelemetry.addData("Alliance", isRedAlliance ? "RED" : "BLUE");
+            customTelemetry.addData("Strategy", isParkOnly ? "PARK ONLY" : "SCORE + PARK");
+            customTelemetry.update();
         }
 
         // Lock in 0 degrees based on exactly how you tile-aligned the robot during setup
@@ -71,36 +76,63 @@ public class ProductionMecanumAutoAlpha extends LinearOpMode {
         drive.resetYaw();
 
         if (opModeIsActive()) {
-            if(!isParkOnly) {
+            if (!isParkOnly) {
                 // STEP 1: Drive to Score Location (e.g., forward 32 inches)
                 drive.driveStraight(32.0, 0.0, 0.7, 3.0);
 
-                // STEP 2: Turn to face the scoring element (e.g., turn 45 degrees left)
+                // STEP 2: Turn to face the scoring element (e.g., turn 90 degrees left)
                 drive.turnToHeading(90.0, 0.5, 2.0);
 
-                // STEP 3: Actuate mechanisms to score (Put your servo/motor actions here)
+                // STEP 3: Actuate mechanisms to score with Live Telemetry Tracking
                 launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-                sleep(2000);
+
+                // Active Loop for Spin-up (Replaces blind sleep)
+                ElapsedTime timer = new ElapsedTime();
+                while (opModeIsActive() && timer.seconds() < 2.0) {
+                    drive.clearBulkCache(); // Ensure fresh encoder readings
+                    double currentVelocity = launcher.getVelocity();
+
+                    customTelemetry.addLine("=== LAUNCHER SPIN UP ===");
+                    customTelemetry.addData("Target Velocity", LAUNCHER_TARGET_VELOCITY);
+                    customTelemetry.addData("Current Velocity", currentVelocity);
+                    customTelemetry.addData("Velocity Error", LAUNCHER_TARGET_VELOCITY - currentVelocity);
+                    customTelemetry.update();
+                }
+
+                // Engage feeding mechanisms
                 windmillServo.setPower(-1);
                 intake.setPower(intakePower);
-                sleep(5000);
+
+                // Active Loop for Shooting Sequence (Replaces blind sleep)
+                timer.reset();
+                while (opModeIsActive() && timer.seconds() < 5.0) {
+                    drive.clearBulkCache();
+                    double currentVelocity = launcher.getVelocity();
+
+                    customTelemetry.addLine("=== FIRING SEQUENCER ===");
+                    customTelemetry.addData("Target Velocity", LAUNCHER_TARGET_VELOCITY);
+                    customTelemetry.addData("Current Velocity", currentVelocity);
+                    customTelemetry.addData("Stable Status", currentVelocity >= LAUNCHER_MIN_VELOCITY ? "READY TO FIRE" : "RECOVERING RPM");
+                    customTelemetry.update();
+                }
+
+                // Shutdown scoring components
                 launcher.setVelocity(0);
                 windmillServo.setPower(0);
                 intake.setPower(0);
 
-
-                // STEP 4: Back away from the score position cleanly holding the 45-degree angle
-                drive.driveStraight(-72.0, -90.0, 0.5, 2.0);
+                // STEP 4: Back away from the score position cleanly holding the 90-degree angle
+                drive.driveStraight(-72.0, 90.0, 0.5, 6.0);
 
                 // STEP 5: Turn toward the human player wall or park zone (e.g., face -90 degrees)
-                drive.turnToHeading(0.0, 0.6, 2.5);
+                // drive.turnToHeading(0.0, 0.6, 2.5);
 
-                // STEP 6: Strafe safely into the designated parking zone
-                drive.strafe(32.0, 0.0, 0.6, 3.0);
-            }
-            else {
-                drive.driveStraight(3.0, 0.0,0.5, 2.0);
-                drive.driveStraight(3.0,90.0, 0.6, 2.0);
+                // STEP 6: Strafe safely into the designated parking zone holding 90.0
+                drive.strafe(32.0, 90.0, 0.6, 3.0);
+            } else {
+                drive.driveStraight(3.0, 0.0, 0.5, 2.0);
+                drive.turnToHeading(90.0, 0.5, 2.0);
+                drive.driveStraight(3.0, 90.0, 0.6, 2.0);
             }
         }
     }
