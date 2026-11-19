@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -28,6 +29,7 @@ public class MecanumImuDrive {
     private final IMU imu;
     private final VoltageSensor batteryVoltageSensor;
     private final List<LynxModule> allHubs;
+    private Limelight3A limelight;
 
     // --- LIVE-TUNABLE DASHBOARD CONSTANTS ---
     // goBILDA 312 RPM (537.7 PPR) + 96mm Mecanum wheels (1:1 ratio) = 45.2848 ticks/inch
@@ -68,9 +70,13 @@ public class MecanumImuDrive {
         backLeft = hardwareMap.get(DcMotorEx.class, "left_back_drive");
         backRight = hardwareMap.get(DcMotorEx.class, "right_back_drive");
 
+        limelight = hardwareMap.get(Limelight3A.class, "os");
+
         // Standard Mecanum reversal (Left side reversed)
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+
+
 
         setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         resetEncoders();

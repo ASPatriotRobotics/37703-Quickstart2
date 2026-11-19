@@ -24,13 +24,26 @@ package org.firstinspires.ftc.teamcode;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.LLStatus;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+
+import java.util.List;
 
 /*
  * This file includes a teleop (driver-controlled) file for the goBILDA® StarterBot with Mecanum
@@ -61,6 +74,8 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
     private CRServo leftIntakeServo = null;
     private CRServo rightIntakeServo = null;
     private CRServo windmillServo = null;
+    private Limelight3A limelight;
+    private IMU imu;
 
 
     /*
@@ -112,6 +127,14 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
         windmillServo = hardwareMap.get(CRServo.class, "windmillServo");
         leftIntakeServo = hardwareMap.get(CRServo.class, "left_intake_servo");
         rightIntakeServo = hardwareMap.get(CRServo.class, "right_intake_servo");
+        limelight = hardwareMap.get(Limelight3A.class,"os");
+        imu = hardwareMap.get(IMU.class, "imu");
+        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP
+        ));
+        imu.initialize(parameters);
+        imu.resetYaw();
 
         /*
          * To drive forward, most robots need the motor on one side to be reversed,
@@ -125,6 +148,10 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
+        // setting up the limelight
+        telemetry.setMsTransmissionInterval((11));
+        limelight.pipelineSwitch(0);
+        limelight.start();
         /*
          * Setting zeroPowerBehavior to BRAKE enables a "brake mode". This causes the motor to
          * slow down much faster when it is coasting. This creates a much more controllable
@@ -198,6 +225,78 @@ public class BioBuzzStarterbotTeleopMecanum extends OpMode {
          * we invert it before passing it to the function.
          */
         mecanumDrive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+
+        //get info from limelight
+        LLStatus status = limelight.getStatus();
+        telemetry.addData("Name", "%s",
+                status.getName());
+        telemetry.addData("LL", "Temp: %.1fC, CPU: %.1f%%, FPS: %d",
+                status.getTemp(), status.getCpu(),(int)status.getFps());
+        telemetry.addData("Pipeline", "Index: %d, Type: %s",
+                status.getPipelineIndex(), status.getPipelineType());
+
+        LLResult result = limelight.getLatestResult();
+        if (result.isValid()) {
+            // Access general information
+            Pose3D botpose = result.getBotpose();
+            double captureLatency = result.getCaptureLatency();
+            double targetingLatency = result.getTargetingLatency();
+            double parseLatency = result.getParseLatency();
+            telemetry.addData("LL Latency", captureLatency + targetingLatency);
+            telemetry.addData("Parse Latency", parseLatency);
+            telemetry.addData("PythonOutput", java.util.Arrays.toString(result.getPythonOutput()));
+
+            telemetry.addData("tx", result.getTx());
+            telemetry.addData("txnc", result.getTxNC());
+            telemetry.addData("ty", result.getTy());
+            telemetry.addData("tync", result.getTyNC());
+
+            telemetry.addData("Botpose", botpose.toString());
+
+            // Access barcode results
+            List<LLResultTypes.BarcodeResult> barcodeResults = result.getBarcodeResults();
+            for (LLResultTypes.BarcodeResult br : barcodeResults) {
+                telemetry.addData("Barcode", "Data: %s", br.getData());
+            }
+
+            // Access classifier results
+            List<LLResultTypes.ClassifierResult> classifierResults = result.getClassifierResults();
+            for (LLResultTypes.ClassifierResult cr : classifierResults) {
+                telemetry.addData("Classifier", "Class: %s, Confidence: %.2f", cr.getClassName(), cr.getConfidence());
+            }
+
+            // Access detector results
+            List<LLResultTypes.DetectorResult> detectorResults = result.getDetectorResults();
+            for (LLResultTypes.DetectorResult dr : detectorResults) {
+                telemetry.addData("Detector", "Class: %s, Area: %.2f", dr.getClassName(), dr.getTargetArea());
+            }
+
+            // Access fiducial results
+            List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
+            for (LLResultTypes.FiducialResult fr : fiducialResults) {
+                telemetry.addData("Fiducial", "ID: %d, Family: %s, X: %.2f, Y: %.2f", fr.getFiducialId(), fr.getFamily(), fr.getTargetXDegrees(), fr.getTargetYDegrees());
+            }
+
+            // Access color results
+            List<LLResultTypes.ColorResult> colorResults = result.getColorResults();
+            for (LLResultTypes.ColorResult cr : colorResults) {
+                telemetry.addData("Color", "X: %.2f, Y: %.2f", cr.getTargetXDegrees(), cr.getTargetYDegrees());
+            }
+        } else {
+            telemetry.addData("Limelight", "No data available");
+        }
+
+        {
+            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+            limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+            LLResult res = limelight.getLatestResult();
+            if (res != null) {
+                if (res.isValid()) {
+                    Pose3D botpose = res.getBotpose_MT2();
+                    // Use botpose data
+                }
+            }
+        }
 
         /*
          * Set the intake power variable to equal the right trigger, minus the left trigger.
